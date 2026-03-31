@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+:root {
+  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+  --font-display: 'Orbitron', 'Arial', sans-serif;
+  --color-accent: #00ffcc;
+  --color-accent-dim: #00ffcc55;
+  --color-border: #00ffcc44;
+  --color-bg: rgba(0, 8, 20, 0.85);
+  --color-text: #a0ffee;
+  --color-text-dim: #4a9982;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-accent-dim); border-radius: 2px; }
+
+/* Selection */
+::selection { background: var(--color-accent-dim); color: #fff; }
