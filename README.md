@@ -4,6 +4,8 @@ An interactive 3D solar system that runs in your browser. The Sun sits in the mi
 
 I made it to get comfortable with React Three Fiber, and I ended up caring a lot more about how it looks than I planned to.
 
+![the whole solar system with the sun glowing in the middle](docs/overview.png)
+
 ## What you can do
 
 - Drag to rotate, scroll to zoom. Zoom heads toward wherever your cursor is, which makes it easy to get close to a small planet.
@@ -15,9 +17,17 @@ I made it to get comfortable with React Three Fiber, and I ended up caring a lot
 
 ## A few things worth knowing
 
-The asteroid belt is 3,000 points scattered between the orbits of Mars and Jupiter, with more of them bunched toward the middle of the belt.
+The sun is a custom shader, so the surface actually boils. There's granulation, the odd sunspot, a darker edge like the real thing, and a corona around it that only the bloom pass picks up.
 
-Planet textures are generated in code on a canvas, so the app never has to download an image to draw a planet. It also means the repo stays small.
+![Saturn up close with its rings and the shadow of the planet falling across them](docs/saturn.png)
+
+Every planet texture is painted in code, no images downloaded at all. The noise is sampled on a sphere so there's no seam and no stretching at the poles. Earth gets continents, ice caps and its own cloud layer, Jupiter has swirling bands and the Great Red Spot, and Saturn's rings have the Cassini division in them. All of that gets painted in Web Workers while the loading screen runs, so the page never freezes.
+
+Planets with air get a glowing atmosphere that only lights up on the side facing the sun.
+
+The asteroid belt is about 1,400 actual lumpy rocks plus a few thousand bits of dust between Mars and Jupiter, and the whole belt drifts round with time.
+
+Orbit lines fade out behind each planet like a little trail, and the background has twinkling stars in different colours plus a faint Milky Way band.
 
 Distances and sizes are scaled so everything is visible on one screen. Planets are bigger and closer together than they are in real life, and the numbers shown for AU are worked out from the scaled orbits where Earth sits at 1.0.
 
@@ -25,7 +35,8 @@ Distances and sizes are scaled so everything is visible on one screen. Planets a
 
 - React 19
 - Three.js with React Three Fiber and Drei
-- React Postprocessing for the glow effects
+- Custom GLSL shaders for the sun, corona, atmospheres and stars
+- React Postprocessing for bloom and tone mapping
 - GSAP for the camera moves
 - Tailwind CSS 4
 - Vite
@@ -50,5 +61,6 @@ src/
   components/   Scene, Planet, Moon, Sun, AsteroidBelt, Starfield, HUD and friends
   data/         planet and moon definitions
   hooks/        selection, pause and speed state
-  utils/        procedural texture generation
+  shaders/      shared GLSL noise
+  utils/        procedural texture painting (runs in Web Workers)
 ```

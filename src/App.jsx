@@ -1,33 +1,33 @@
-import { Suspense, useState, useCallback, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import Scene from './components/Scene.jsx'
 import HUD from './components/HUD.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { useSolarSystem } from './hooks/useSolarSystem.js'
+import { preloadTextures } from './utils/proceduralTextures.js'
 
-// Simulate load progress tied to asset fetching
+// Real load progress: planet textures are painted in background workers and
+// the scene only mounts once they are all ready.
 function useLoadProgress() {
   const [progress, setProgress] = useState(0)
+  const [texturesReady, setTexturesReady] = useState(false)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    let val = 0
-    const id = setInterval(() => {
-      val += val < 80 ? 8 : val < 95 ? 2 : 0.5
-      const capped = Math.min(val, 100)
-      setProgress(capped)
-      if (capped >= 100) {
-        clearInterval(id)
-        setTimeout(() => setReady(true), 400)
-      }
-    }, 60)
-    return () => clearInterval(id)
+    let alive = true
+    const started = performance.now()
+    preloadTextures((p) => { if (alive) setProgress(Math.round(p * 100)) }).then(() => {
+      if (!alive) return
+      // mount the scene behind the boot screen so shaders compile out of sight
+      setTexturesReady(true)
+      // keep the boot screen up for a beat so it doesn't just flash
+      const wait = Math.max(0, 1200 - (performance.now() - started))
+      setTimeout(() => { if (alive) setReady(true) }, wait + 600)
+    })
+    return () => { alive = false }
   }, [])
 
-  // kept for API compat, unused now
-  const markReady = useCallback(() => {}, [])
-
-  return { progress, ready, markReady }
+  return { progress, texturesReady, ready }
 }
 
 export default function App() {
@@ -45,7 +45,7 @@ export default function App() {
     setSpeedMultiplier,
   } = useSolarSystem()
 
-  const { progress, ready, markReady } = useLoadProgress()
+  const { progress, texturesReady, ready } = useLoadProgress()
 
   // Space key unlocks camera follow
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function App() {
       {!ready && <LoadingScreen progress={progress} />}
 
       {/* 3-D Canvas */}
-      <Suspense fallback={null}>
+      {texturesReady && <Suspense fallback={null}>
         <div style={{ width: '100%', height: '100%' }}>
           <Scene
             onSelectPlanet={selectPlanet}
@@ -84,7 +84,7 @@ export default function App() {
             focusedPlanetId={selectedPlanet?.id ?? null}
           />
         </div>
-      </Suspense>
+      </Suspense>}
 
       {/* HUD overlay — always on top */}
       {ready && (

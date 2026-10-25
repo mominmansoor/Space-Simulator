@@ -1,8 +1,8 @@
 import { Suspense, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Stars } from '@react-three/drei'
-import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing'
-import { BlendFunction } from 'postprocessing'
+import { OrbitControls } from '@react-three/drei'
+import { EffectComposer, Bloom, Noise, Vignette, ToneMapping } from '@react-three/postprocessing'
+import { BlendFunction, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import Sun from './Sun.jsx'
 import Planet from './Planet.jsx'
@@ -11,25 +11,28 @@ import AsteroidBelt from './AsteroidBelt.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import { PLANETS_DATA } from '../data/planets.js'
 
+// Only the sun is bright enough (above 1.0) to bloom. Tone mapping comes last
+// so the HDR sun rolls off nicely instead of clipping.
 function PostFX() {
   return (
     <EffectComposer multisampling={4}>
       <Bloom
-        intensity={1.2}
-        luminanceThreshold={0.15}
-        luminanceSmoothing={0.75}
+        intensity={0.85}
+        luminanceThreshold={1.0}
+        luminanceSmoothing={0.25}
         mipmapBlur
-        radius={0.6}
+        radius={0.7}
+      />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      <Vignette
+        offset={0.28}
+        darkness={0.65}
+        blendFunction={BlendFunction.NORMAL}
       />
       <Noise
         premultiply
         blendFunction={BlendFunction.ADD}
-        opacity={0.035}
-      />
-      <Vignette
-        offset={0.3}
-        darkness={0.7}
-        blendFunction={BlendFunction.NORMAL}
+        opacity={0.02}
       />
     </EffectComposer>
   )
@@ -102,19 +105,10 @@ function SolarSystem({
       />
 
       <Starfield />
-      <Stars
-        radius={450}
-        depth={60}
-        count={1500}
-        factor={2.5}
-        saturation={0.2}
-        fade
-        speed={0}
-      />
 
       <Suspense fallback={null}>
         <Sun />
-        <AsteroidBelt />
+        <AsteroidBelt isPaused={isPaused} speedMultiplier={speedMultiplier} />
         {PLANETS_DATA.map((planet) => (
           <Planet
             key={planet.id}

@@ -43,6 +43,7 @@ export const PLANETS_DATA = [
     emissiveColor: '#c49a4a',
     ringColor: '#c49a4a',
     distanceAU: 0.72,
+    atmosphere: { color: '#f3cf88', intensity: 0.9, thickness: 0.1 },
     description: 'Hottest planet at 465°C average. Thick CO₂ atmosphere creates extreme greenhouse effect.',
   },
   {
@@ -57,6 +58,8 @@ export const PLANETS_DATA = [
     emissiveColor: '#1a5276',
     ringColor: '#2980b9',
     distanceAU: 1.0,
+    clouds: true,
+    atmosphere: { color: '#5aa8ff', intensity: 1.15, thickness: 0.14 },
     description: 'Our home. The only known planet harboring life, with liquid water oceans covering 71% of the surface.',
   },
   {
@@ -71,6 +74,7 @@ export const PLANETS_DATA = [
     emissiveColor: '#7a2a08',
     ringColor: '#c1440e',
     distanceAU: 1.52,
+    atmosphere: { color: '#e38a5c', intensity: 0.45, thickness: 0.08 },
     description: 'The Red Planet. Home to Olympus Mons, the tallest volcano in the solar system.',
   },
   {
@@ -85,6 +89,7 @@ export const PLANETS_DATA = [
     emissiveColor: '#8b5e0a',
     ringColor: '#c88b3a',
     distanceAU: 5.2,
+    atmosphere: { color: '#ead2a4', intensity: 0.4, thickness: 0.06 },
     description: 'Largest planet. A gas giant with a Great Red Spot storm larger than Earth that has raged for 400 years.',
   },
   {
@@ -100,8 +105,10 @@ export const PLANETS_DATA = [
     ringColor: '#e4d191',
     distanceAU: 9.58,
     hasRings: true,
-    ringInner: 3.2,
-    ringOuter: 5.5,
+    ringInner: 3.0,
+    ringOuter: 5.6,
+    ringTexture: 'saturnRings',
+    atmosphere: { color: '#f0dcab', intensity: 0.35, thickness: 0.06 },
     description: 'The Ringed Planet. Its spectacular ring system spans 282,000 km but is only ~20 m thick.',
   },
   {
@@ -117,8 +124,10 @@ export const PLANETS_DATA = [
     ringColor: '#7de8e8',
     distanceAU: 19.2,
     hasRings: true,
-    ringInner: 2.0,
-    ringOuter: 3.2,
+    ringInner: 2.1,
+    ringOuter: 3.3,
+    ringTexture: 'uranusRings',
+    atmosphere: { color: '#a4f0f2', intensity: 0.75, thickness: 0.1 },
     description: 'Ice giant tilted at 97.8° — it essentially rolls along its orbit. Has faint rings discovered in 1977.',
   },
   {
@@ -133,6 +142,7 @@ export const PLANETS_DATA = [
     emissiveColor: '#1a2870',
     ringColor: '#3f54ba',
     distanceAU: 30.05,
+    atmosphere: { color: '#5d8cff', intensity: 0.85, thickness: 0.1 },
     description: 'Furthest planet. Has the fastest winds in the solar system at up to 2,100 km/h.',
   },
 ]

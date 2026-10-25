@@ -5,6 +5,7 @@ import { gsap } from 'gsap'
 import * as THREE from 'three'
 import OrbitRing from './OrbitRing.jsx'
 import Moon from './Moon.jsx'
+import Atmosphere from './Atmosphere.jsx'
 import { getTexture } from '../utils/proceduralTextures.js'
 import { MOONS_DATA } from '../data/moons.js'
 
@@ -32,22 +33,59 @@ function PlanetLabel({ name, color }) {
   )
 }
 
-function PlanetRings({ innerRadius, outerRadius }) {
+// Ring geometry with UVs remapped so u runs from the inner edge (0) to the
+// outer edge (1). That lets a thin strip texture paint the ring bands.
+function PlanetRings({ innerRadius, outerRadius, textureId }) {
+  const texture = getTexture(textureId)
+  const geometry = useMemo(() => {
+    const g = new THREE.RingGeometry(innerRadius, outerRadius, 192, 1)
+    const pos = g.attributes.position
+    const uv = g.attributes.uv
+    const v = new THREE.Vector3()
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i)
+      uv.setXY(i, (v.length() - innerRadius) / (outerRadius - innerRadius), 0.5)
+    }
+    return g
+  }, [innerRadius, outerRadius])
+
   return (
-    <mesh rotation={[Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[innerRadius, outerRadius, 128]} />
-      <meshBasicMaterial
-        color="#d4b483"
+    <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow raycast={() => null}>
+      <meshStandardMaterial
+        map={texture}
         transparent
-        opacity={0.45}
         side={THREE.DoubleSide}
         depthWrite={false}
+        roughness={1}
+        metalness={0}
+        alphaTest={0.02}
       />
     </mesh>
   )
 }
 
-function PlanetMesh({ data, showLabel, onClick, isPaused, speedMultiplier, registerMesh, moons }) {
+function Clouds({ radius, isPaused, speedMultiplier }) {
+  const ref = useRef()
+  const alpha = getTexture('earthClouds')
+  useFrame((_, delta) => {
+    if (ref.current && !isPaused) ref.current.rotation.y += delta * 0.02 * speedMultiplier
+  })
+  return (
+    <mesh ref={ref} raycast={() => null}>
+      <sphereGeometry args={[radius * 1.012, 64, 64]} />
+      <meshStandardMaterial
+        color="#ffffff"
+        alphaMap={alpha}
+        transparent
+        depthWrite={false}
+        roughness={1}
+        metalness={0}
+      />
+    </mesh>
+  )
+}
+
+function PlanetMesh({ data, showLabel, showOrbit, onClick, isPaused, speedMultiplier, registerMesh, moons }) {
   const orbitRef = useRef()
   const meshRef  = useRef()
   const glowRef  = useRef()
@@ -55,7 +93,7 @@ function PlanetMesh({ data, showLabel, onClick, isPaused, speedMultiplier, regis
   const [hovered, setHovered] = useState(false)
 
   const { camera, controls } = useThree()
-  const texture = useMemo(() => getTexture(data.id), [data.id])
+  const texture = getTexture(data.id)
 
   const handleClick = useCallback((e) => {
     e.stopPropagation()
@@ -99,8 +137,11 @@ function PlanetMesh({ data, showLabel, onClick, isPaused, speedMultiplier, regis
 
   return (
     <group ref={orbitRef}>
+      {showOrbit && (
+        <OrbitRing radius={data.orbitRadius} color={data.ringColor ?? data.color} opacity={0.55} />
+      )}
       <group position={[data.orbitRadius, 0, 0]}>
-        {/* Moons orbit in the planet's local space — they follow it automatically */}
+        {/* Moons orbit in the planet's local space, so they follow it automatically */}
         {moons?.map(moon => (
           <Moon
             key={moon.id}
@@ -122,18 +163,30 @@ function PlanetMesh({ data, showLabel, onClick, isPaused, speedMultiplier, regis
             onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default' }}
             userData={{ planetId: data.id }}
           >
-            <sphereGeometry args={[data.radius, 64, 64]} />
+            <sphereGeometry args={[data.radius, 96, 96]} />
             <meshStandardMaterial
               map={texture}
-              roughness={0.85}
-              metalness={0.05}
-              emissive={new THREE.Color(data.emissiveColor)}
-              emissiveIntensity={0.09}
+              color={texture ? '#ffffff' : data.color}
+              roughness={data.id === 'earth' ? 0.7 : 0.9}
+              metalness={0}
             />
           </mesh>
 
+          {data.clouds && (
+            <Clouds radius={data.radius} isPaused={isPaused} speedMultiplier={speedMultiplier} />
+          )}
+
+          {data.atmosphere && (
+            <Atmosphere
+              radius={data.radius}
+              color={data.atmosphere.color}
+              intensity={data.atmosphere.intensity}
+              thickness={data.atmosphere.thickness}
+            />
+          )}
+
           {/* Hover glow shell */}
-          <mesh ref={glowRef}>
+          <mesh ref={glowRef} raycast={() => null}>
             <sphereGeometry args={[data.radius * 1.07, 32, 32]} />
             <meshBasicMaterial
               color={new THREE.Color(data.color)}
@@ -146,7 +199,11 @@ function PlanetMesh({ data, showLabel, onClick, isPaused, speedMultiplier, regis
           </mesh>
 
           {data.hasRings && (
-            <PlanetRings innerRadius={data.ringInner} outerRadius={data.ringOuter} />
+            <PlanetRings
+              innerRadius={data.ringInner}
+              outerRadius={data.ringOuter}
+              textureId={data.ringTexture}
+            />
           )}
 
           {showLabel && <PlanetLabel name={data.name} color={data.color} />}
@@ -159,23 +216,15 @@ function PlanetMesh({ data, showLabel, onClick, isPaused, speedMultiplier, regis
 export default function Planet({ data, showOrbit, showLabel, onClick, isPaused, speedMultiplier, registerMesh }) {
   const moons = MOONS_DATA[data.id] ?? []
   return (
-    <>
-      {showOrbit && (
-        <OrbitRing
-          radius={data.orbitRadius}
-          color={data.ringColor ?? data.color}
-          opacity={0.18}
-        />
-      )}
-      <PlanetMesh
-        data={data}
-        moons={moons}
-        showLabel={showLabel}
-        onClick={onClick}
-        isPaused={isPaused}
-        speedMultiplier={speedMultiplier}
-        registerMesh={registerMesh}
-      />
-    </>
+    <PlanetMesh
+      data={data}
+      moons={moons}
+      showLabel={showLabel}
+      showOrbit={showOrbit}
+      onClick={onClick}
+      isPaused={isPaused}
+      speedMultiplier={speedMultiplier}
+      registerMesh={registerMesh}
+    />
   )
 }
