@@ -7,6 +7,7 @@
 An interactive 3D solar system that runs in your browser. The Sun sits in the middle, the planets orbit around it, and you can fly the camera around and click a planet to follow it.
 
 The current version is all about the visuals: a custom shader sun, planet textures painted in code, glowing atmospheres and an asteroid belt between Mars and Jupiter.
+soon will add gravity simulation and then passed through machine learning to rediscover einsteins equations
 
 ## What's coming
 
