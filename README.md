@@ -15,15 +15,4 @@ The revamp is about making gravity the centre of the project, built around Einst
 
 More details here once the update lands.
 
-## Running the current version
-
-```bash
-git clone https://github.com/mominmansoor/Space-Simulator
-cd Space-Simulator
-npm install
-npm run dev
-```
-
-Then open the address Vite prints, usually http://localhost:5173.
-
 Built with React, Three.js (React Three Fiber) and Vite.
